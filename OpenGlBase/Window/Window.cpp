@@ -8,7 +8,7 @@ namespace Base
 {    
     Window::Window(const WindowConfig& Config)
     {
-        assert(Config.Title == nullptr);
+        assert(Config.Title);
 
         Monitor = Config.Monitor ? Config.Monitor : glfwGetPrimaryMonitor();
 
