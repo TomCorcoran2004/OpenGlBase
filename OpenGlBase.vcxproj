@@ -149,10 +149,10 @@
     <ClCompile Include="Include\OpenGlBase\Base.cpp" />
     <ClCompile Include="Include\glad\glad.c" />
     <ClCompile Include="Include\OpenGlBase\Debug\Log.cpp" />
-    <ClCompile Include="Include\OpenGlBase\Render\main.cpp" />
+    <ClCompile Include="Include\OpenGlBase\Render\Render2D.cpp" />
+    <ClCompile Include="main.cpp" />
     <ClCompile Include="Include\OpenGlBase\Shader\ShaderManager.cpp" />
     <ClCompile Include="Include\OpenGlBase\Window\Window.cpp" />
-    <ClCompile Include="Include\OpenGlBase\Render\Render2D.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Include\glad\glad.h" />
@@ -450,9 +450,10 @@
     <ClInclude Include="Include\OpenGlBase\Input\Input.h" />
     <ClInclude Include="Include\OpenGlBase\Base.h" />
     <ClInclude Include="Include\OpenGlBase\Debug\Log.h" />
+    <ClInclude Include="Include\OpenGlBase\Render\Render2D.h" />
+    <ClInclude Include="Include\OpenGlBase\Render\VAO.h" />
     <ClInclude Include="Include\OpenGlBase\Shader\ShaderManager.h" />
     <ClInclude Include="Include\OpenGlBase\Window\Window.h" />
-    <ClInclude Include="Render2D.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Include\glm\detail\func_common.inl" />

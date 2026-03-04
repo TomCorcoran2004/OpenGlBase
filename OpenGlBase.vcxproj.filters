@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Include\OpenGlBase\Render\main.cpp">
+    <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Include\OpenGlBase\Window\Window.cpp">
@@ -938,7 +938,10 @@
     <ClInclude Include="Include\OpenGlBase\Input\Input.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Render2D.h">
+    <ClInclude Include="Include\OpenGlBase\Render\VAO.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\OpenGlBase\Render\Render2D.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
