@@ -72,7 +72,7 @@ public:
         IndicesCount = Indices.size();
     }
 
-    void Draw()
+    void Draw(GLenum PrimitiveType)
     {
         if (Bound == false)
         {
@@ -80,7 +80,7 @@ public:
                 return;
         }
         
-        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(IndicesCount), GL_UNSIGNED_INT, 0);
+        glDrawElements(PrimitiveType, static_cast<GLsizei>(IndicesCount), GL_UNSIGNED_INT, 0);
     }
 
 private:

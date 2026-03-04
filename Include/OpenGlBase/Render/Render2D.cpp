@@ -149,7 +149,7 @@ namespace Base
                 Points[1] = PrimitiveVertex(End, Color);
 
                 std::size_t OldVerticesSize = LineVertices.size();
-                LineVertices.resize(OldVerticesSize + 3);
+                LineVertices.resize(OldVerticesSize + 2);
                 memcpy(LineVertices.data() + OldVerticesSize, Points, sizeof(Points));
 
                 std::size_t IndicesSize = LineIndices.size();
@@ -246,17 +246,17 @@ namespace Base
             {
                 PointsVAO->Bind();
                 PointsVAO->BufferData(PointVertices, PointIndicies, GL_STREAM_DRAW);
-                PointsVAO->Draw();
+                PointsVAO->Draw(GL_POINTS);
                 PointsVAO->UnBind();
             }
             PointVertices.clear();
-            LineIndices.clear();
+            PointIndicies.clear();
 
             if (LineVertices.size())
             {
                 LinesVAO->Bind();
                 LinesVAO->BufferData(LineVertices, LineIndices, GL_STREAM_DRAW);
-                LinesVAO->Draw();
+                LinesVAO->Draw(GL_LINES);
                 LinesVAO->UnBind();
             }
             LineVertices.clear();
@@ -266,7 +266,7 @@ namespace Base
             {
                 TrianglesVAO->Bind();
                 TrianglesVAO->BufferData(TriangleVertices, TriangleIndices, GL_STREAM_DRAW);
-                TrianglesVAO->Draw();
+                TrianglesVAO->Draw(GL_TRIANGLES);
                 TrianglesVAO->UnBind();
             }
             TriangleVertices.clear();

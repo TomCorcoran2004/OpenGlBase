@@ -42,7 +42,7 @@ int main()
         Base::Render2D::AddLine(
             vec2(100.0f, 300.0f),   // Start
             vec2(200.0f, 350.0f),   // End
-            3.0f,                    // Thickness in pixels
+            1.0f,                    // Thickness in pixels
             vec4(0.0f, 0.0f, 1.0f, 1.0f)  // Blue color
         );
 
