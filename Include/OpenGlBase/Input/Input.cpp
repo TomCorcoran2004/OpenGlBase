@@ -1,201 +1,103 @@
-#include "Window.h"
-#include <glfw/glfw3.h>
-#include <glad/glad.h>
+#include "Input.h"
 
-#include "../Debug/Log.h"
+#include <array>
 
+#include <GLFW/glfw3.h>
+#include "../Window/Window.h"
 namespace Base
-{    
-    Window::Window(const WindowConfig& Config)
+{
+    namespace Input
     {
-        assert(Config.Title);
-
-        Monitor = Config.Monitor ? Config.Monitor : glfwGetPrimaryMonitor();
-
-        SetWindowHints(Config);
-
-        WindowInstance = glfwCreateWindow(Config.Size.x, Config.Size.y, Config.Title, Config.Monitor, nullptr);
-        
-        if (WindowInstance == nullptr)
+        struct Key
         {
-            Log::Error("GLFWWindow* WindowInstance == nullptr");
-            assert(WindowInstance);
-            return;
+            bool Pressed = false;
+            bool Released = true;
+            f64 TimeSincePressed = 0.0;
+        };
+
+        void KeyCallBack(GLFWwindow* WindowInstance, int Key, int Scancode, int Action, int Mods);
+        void CursorPositionCallBack(GLFWwindow* WindowInstance, double XPosition, double YPosition);
+        void MouseButtonCallBack(GLFWwindow* WindowInstance, int Button, int Action, int Mods);
+        void ScrollCallBack(GLFWwindow* WindowInstance, double XOffset, double YOffset);
+
+        constexpr KeyCodes ConvertGLFWKey(i32 GLFWKey);
+        constexpr MouseButtonCodes ConvertGLFWMouseButton(i32 GLFWMouseButton);
+        constexpr i32 ConvertToGLFWCursorMode(CursorModes CursorMode);
+
+        std::array<Key, NumKeyCodes> Keys;
+        std::array<Key, NumMouseButtonCodes> MouseButtons;
+
+        dvec2 MousePosition = { 0.0, 0.0 };
+        dvec2 LastMousePosition = { 0.0, 0.0 };
+        dvec2 MouseDelta = { 0.0, 0.0 };
+        f64 ScrollDelta = 0.0;
+        f64 ScrollOffset = 0.0;
+
+        bool Init()
+        {
+            if (Window::GetGLFWWindow() == nullptr)
+            {
+                assert(Window::GetGLFWWindow());
+                return false;
+            }
+
+            if (glfwRawMouseMotionSupported())
+                glfwSetInputMode(Window::GetGLFWWindow(), GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
+
+            glfwSetKeyCallback(Window::GetGLFWWindow(), KeyCallBack);
+            glfwSetCursorPosCallback(Window::GetGLFWWindow(), CursorPositionCallBack);
+            glfwSetMouseButtonCallback(Window::GetGLFWWindow(), MouseButtonCallBack);
+            glfwSetScrollCallback(Window::GetGLFWWindow(), ScrollCallBack);
+
+            return true;
         }
 
-        glfwSetWindowUserPointer(WindowInstance, this);
-
-        glfwMakeContextCurrent(WindowInstance);
-        bool GladInitSuccess = gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
-        if (GladInitSuccess == false)
+        void Destroy()
         {
-            Log::Error("GladInitSuccess == false");
-            assert(GladInitSuccess);
-            return;
+
         }
 
-        glfwSetFramebufferSizeCallback(WindowInstance, FrameBufferSizeCallBack);
-        glfwSetWindowSizeCallback(WindowInstance, SizeCallBack);
-        glfwSetWindowPosCallback(WindowInstance, PositionCallBack);
-
-        //Initializing All Values To Avoid Leaving Them Un-Initialised Until First CallBacks
-        glfwGetFramebufferSize(WindowInstance, &FrameBufferSize.x, &FrameBufferSize.y);
-        glfwGetWindowSize(WindowInstance, &Size.x, &Size.y);
-        glfwGetWindowPos(WindowInstance, &Position.x, &Position.y);
-
-        glfwSwapInterval(0); //disable vsync
-
-        glViewport(0, 0, Config.Size.x, Config.Size.y);
-
-        if (glfwRawMouseMotionSupported())
-            glfwSetInputMode(WindowInstance, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
-
-        glfwSetKeyCallback(WindowInstance, KeyCallBack);
-        glfwSetCursorPosCallback(WindowInstance, CursorPositionCallBack);
-        glfwSetMouseButtonCallback(WindowInstance, MouseButtonCallBack);
-        glfwSetScrollCallback(WindowInstance, ScrollCallBack);
-    }
-
-    Window::~Window()
-    {   
-        assert(WindowInstance);
-        glfwDestroyWindow(WindowInstance);
-    }
-    
-    bool Window::ShouldClose()
-    {
-        assert(WindowInstance);
-
-        if (PendingClose) glfwSetWindowShouldClose(WindowInstance, true);
-
-        return glfwWindowShouldClose(WindowInstance);
-    }
-
-    void Window::Tick()
-    {
-        assert(WindowInstance);
-
-        LastMousePosition = MousePosition;
-        MouseDelta = MousePosition - LastMousePosition;
-        LastMousePosition = MousePosition;
-
-        ScrollDelta = ScrollOffset;
-        ScrollOffset = 0.0;
-
-        f64 CurrentTime = glfwGetTime();
-        DeltaTime = CurrentTime - LastFrameTime;
-        LastFrameTime = CurrentTime;
-        
-        glfwPollEvents();
-        glfwSwapBuffers(WindowInstance);
-    }
-
-    ivec2 Window::GetWindowPos()
-    {
-        return Position;
-    }
-
-    ivec2 Window::GetWindowSize()
-    {
-        return Size;
-    }
-
-    ivec2 Window::GetFrameBufferSize()
-    {
-        return FrameBufferSize;
-    }
-
-    GLFWwindow* Window::GetGLFWWindow()
-    {
-        return WindowInstance;
-    }
-
-    GLFWmonitor* Window::GetPrimaryMonitor()
-    {
-        return Monitor;
-    }
-
-    f64 Window::GetDeltaTime()
-    {
-        return DeltaTime;
-    }
-
-    void Window::Close()
-    {
-        PendingClose = true;
-    }
-
-    void Window::SetWindowPos(const ivec2& NewPosition)
-    {
-        assert(WindowInstance);
-        
-        glfwSetWindowPos(WindowInstance, Position.x, Position.y);
-    }
-
-    void Window::SetWindowSize(const ivec2& Size)
-    {
-        assert(WindowInstance);
-        
-        glfwSetWindowSize(WindowInstance, Size.x, Size.y);
-    }
-
-    void Window::ToggleFullscreen()
-    {
-        assert(WindowInstance);
-        assert(Monitor);
-
-        if (IsFullScreen())
+        void Tick()
         {
-            glfwSetWindowMonitor(WindowInstance, nullptr, LastWindowedPosition.x, LastWindowedPosition.y, LastWindowedSize.x, LastWindowedSize.y, 0);
+            LastMousePosition = MousePosition;
+            MouseDelta = MousePosition - LastMousePosition;
+            LastMousePosition = MousePosition;
+
+            ScrollDelta = ScrollOffset;
+            ScrollOffset = 0.0;
         }
-        else
+
+        void SetCursorMode(CursorModes Mode)
         {
-            LastWindowedPosition = GetWindowPos();
-            LastWindowedSize = GetWindowSize();
-            
-            const GLFWvidmode* VideoMode = glfwGetVideoMode(Monitor);
-            
-            glfwSetWindowMonitor(WindowInstance, Monitor, 0, 0, VideoMode->width, VideoMode->height, VideoMode->refreshRate);
+            assert(Window::GetGLFWWindow());
+
+            glfwSetInputMode(Window::GetGLFWWindow(), GLFW_CURSOR, ConvertToGLFWCursorMode(Mode));
         }
-    }
 
-    void Window::Minimize()
-    {
-        assert(WindowInstance);
-        glfwIconifyWindow(WindowInstance);
-    }
-
-    void Window::SetCursorMode(CursorModes Mode)
-    {
-        assert(WindowInstance);
-        
-        glfwSetInputMode(WindowInstance, GLFW_CURSOR, ConvertToGLFWCursorMode(Mode));
-    }
-
-    dvec2 Window::GetMousePosition()
-    {
-        return MousePosition;
-    }
-
-    dvec2 Window::GetMouseDelta()
-    {
-        return MouseDelta;
-    }
-
-    f64 Window::GetScrollDelta()
-    {
-        return ScrollDelta;
-    }
-
-    bool Window::IsMouseButtonDown(MouseButtonCodes Button)
-    {
-        return MouseButtons[Button].Pressed;
-    }
-
-    const char* GetMouseButtonName(MouseButtonCodes Button)
-    {
-        switch (Button)
+        dvec2 GetMousePosition()
         {
+            return MousePosition;
+        }
+
+        dvec2 GetMouseDelta()
+        {
+            return MouseDelta;
+        }
+
+        f64 GetScrollDelta()
+        {
+            return ScrollDelta;
+        }
+
+        bool IsMouseButtonDown(MouseButtonCodes Button)
+        {
+            return MouseButtons[Button].Pressed;
+        }
+
+        const char* GetMouseButtonName(MouseButtonCodes Button)
+        {
+            switch (Button)
+            {
             case(LeftButton):    return "MouseLeft";
             case(RightButton):   return "MouseRight";
             case(MiddleWheel):   return "MouseMiddle";
@@ -203,35 +105,30 @@ namespace Base
             case(Button5):       return "Mouse5";
             case(Button6):       return "Mouse6";
             case(Button7):       return "Mouse7";
+            }
+
+            return "";
         }
 
-        return "";
-    }
-
-    bool Window::WasMouseButtonJustPressed(MouseButtonCodes Button)
-    {
-        if (MouseButtons[Button].Pressed && MouseButtons[Button].Released)
+        bool WasMouseButtonJustPressed(MouseButtonCodes Button)
         {
-            MouseButtons[Button].Released = false;
-            return true;
+            if (MouseButtons[Button].Pressed && MouseButtons[Button].Released)
+            {
+                MouseButtons[Button].Released = false;
+                return true;
+            }
+            else return false;
         }
-        else return false;
-    }
 
-    f64 Window::GetTimeSinceMouseButtonPressed(MouseButtonCodes Button)
-    {
-        return glfwGetTime() - MouseButtons[Button].TimeSincePressed;
-    }
-
-    bool Window::IsKeyDown(KeyCodes Key)
-    {
-        return Keys[Key].Pressed;
-    }
-
-    const char* Window::GetKeyName(KeyCodes Key)
-    {
-        switch (Key)
+        f64 GetTimeSinceMouseButtonPressed(MouseButtonCodes Button)
         {
+            return glfwGetTime() - MouseButtons[Button].TimeSincePressed;
+        }
+
+        const char* GetKeyName(KeyCodes Key)
+        {
+            switch (Key)
+            {
             case(UnknownKey): return "Unknown";
             case(HatCentered): return "HatCentered";
             case(HatUp): return "HatUp";
@@ -362,61 +259,35 @@ namespace Base
             case(RightAlt): return "RightAlt";
             case(RightSuper): return "RightSuper";
             case(Menu): return "Menu";
+            }
+
+            return "";
         }
 
-        return "";
-    }
-
-    bool Window::WasKeyJustPressed(KeyCodes Key)
-    {
-        if (Keys[Key].Pressed && Keys[Key].Released)
+        bool IsKeyDown(KeyCodes Key)
         {
-            Keys[Key].Released = false;
-            return true;
+            return Keys[Key].Pressed;
         }
-        else return false;
-    }
 
-    f64 Window::GetTimeSinceKeyPressed(KeyCodes Key)
-    {
-        return glfwGetTime() - Keys[Key].TimeSincePressed;
-    }
-
-    bool Window::IsFullScreen()
-    {
-        assert(WindowInstance);
-        
-        return glfwGetWindowMonitor(WindowInstance);
-    }
-
-    void Window::SetWindowHints(const WindowConfig& Config)
-    {
-        glfwDefaultWindowHints();
-        
-        glfwWindowHint(GLFW_RESIZABLE, Config.Resizeable);
-        glfwWindowHint(GLFW_VISIBLE, Config.InitiallyVisible);
-        glfwWindowHint(GLFW_DECORATED, Config.HaveDecorations);
-        glfwWindowHint(GLFW_FOCUSED, Config.InituiallyFocused);
-        glfwWindowHint(GLFW_CENTER_CURSOR, Config.CenterCursorOnStartup);
-    }
-
-    void Window::SetSizeInternal(const ivec2& NewSize)
-    {
-        Size = NewSize;
-    }
-    void Window::SetPositionInternal(const ivec2& NewPosition)
-    {
-        Position = NewPosition;
-    }
-    void Window::SetFrameBufferSizeInternal(const ivec2& NewFrameBufferSize)
-    {
-        FrameBufferSize = NewFrameBufferSize;
-    }
-
-    constexpr KeyCodes Window::ConvertGLFWKey(i32 GLFWKey)
-    {
-        switch (GLFWKey)
+        bool WasKeyJustPressed(KeyCodes Key)
         {
+            if (Keys[Key].Pressed && Keys[Key].Released)
+            {
+                Keys[Key].Released = false;
+                return true;
+            }
+            else return false;
+        }
+
+        f64 GetTimeSinceKeyPressed(KeyCodes Key)
+        {
+            return glfwGetTime() - Keys[Key].TimeSincePressed;
+        }
+
+        constexpr KeyCodes ConvertGLFWKey(i32 GLFWKey)
+        {
+            switch (GLFWKey)
+            {
             case(GLFW_KEY_UNKNOWN): return UnknownKey;
             case(GLFW_HAT_CENTERED): return HatCentered;
             case(GLFW_HAT_UP): return HatUp;
@@ -547,15 +418,15 @@ namespace Base
             case(GLFW_KEY_RIGHT_ALT): return RightAlt;
             case(GLFW_KEY_RIGHT_SUPER): return RightSuper;
             case(GLFW_KEY_MENU): return Menu;
+            }
+
+            return UnknownKey;
         }
 
-        return UnknownKey;
-    }
-
-    constexpr MouseButtonCodes Window::ConvertGLFWMouseButton(i32 GLFWMouseButton)
-    {
-        switch (GLFWMouseButton)
+        constexpr MouseButtonCodes ConvertGLFWMouseButton(i32 GLFWMouseButton)
         {
+            switch (GLFWMouseButton)
+            {
             case(GLFW_MOUSE_BUTTON_LEFT): return LeftButton;
             case(GLFW_MOUSE_BUTTON_RIGHT): return RightButton;
             case(GLFW_MOUSE_BUTTON_MIDDLE): return MiddleWheel;
@@ -563,108 +434,63 @@ namespace Base
             case(GLFW_MOUSE_BUTTON_5): return Button5;
             case(GLFW_MOUSE_BUTTON_6): return Button6;
             case(GLFW_MOUSE_BUTTON_7): return Button7;
+            }
         }
-    }
 
-    constexpr i32 Window::ConvertToGLFWCursorMode(CursorModes CursorMode)
-    {
-        switch (CursorMode)
+        constexpr i32 ConvertToGLFWCursorMode(CursorModes CursorMode)
         {
+            switch (CursorMode)
+            {
             case(CursorNormal): return GLFW_CURSOR_NORMAL;
             case(CursorHidden): return GLFW_CURSOR_HIDDEN;
             case(CursorDisabled): return GLFW_CURSOR_DISABLED;
             case(CursorCapured): return GLFW_CURSOR_CAPTURED;
+            }
         }
-    }
 
-    void Window::PositionCallBack(GLFWwindow* WindowInstance, int X, int Y)
-    {
-        assert(WindowInstance);
-        
-        Window* Self = (Window*)glfwGetWindowUserPointer(WindowInstance);
-        
-        Self->SetPositionInternal(ivec2{ X, Y });
-    }
-
-    void Window::SizeCallBack(GLFWwindow* WindowInstance, int Width, int Height)
-    {
-        Window* WindowObject = static_cast<Window*>(glfwGetWindowUserPointer(WindowInstance));
-
-        assert(WindowObject);
-
-        WindowObject->SetSizeInternal(ivec2{ Width, Height });
-    }
-
-    void Window::FrameBufferSizeCallBack(GLFWwindow* WindowInstance, int Width, int Height)
-    {
-        Window* WindowObject = static_cast<Window*>(glfwGetWindowUserPointer(WindowInstance));
-
-        assert(WindowObject);
-
-        glViewport(0, 0, Width, Height);
-
-        WindowObject->SetFrameBufferSizeInternal(ivec2{ Width, Height });
-    }
-
-    void Window::KeyCallBack(GLFWwindow* WindowInstance, int Key, int Scancode, int Action, int Mods)
-    {
-        Window* WindowObject = static_cast<Window*>(glfwGetWindowUserPointer(WindowInstance));
-
-        KeyCodes KeyCode = ConvertGLFWKey(Key);
-
-
-        assert(WindowObject);
-
-        if (Action == GLFW_PRESS)
+        void KeyCallBack(GLFWwindow* WindowInstance, int Key, int Scancode, int Action, int Mods)
         {
-            WindowObject->Keys[KeyCode].Pressed = true;
-            WindowObject->Keys[KeyCode].TimeSincePressed = glfwGetTime();
+            KeyCodes KeyCode = ConvertGLFWKey(Key);
+
+            if (Action == GLFW_PRESS)
+            {
+                Keys[KeyCode].Pressed = true;
+                Keys[KeyCode].TimeSincePressed = glfwGetTime();
+            }
+            else if (Action == GLFW_RELEASE)
+            {
+                Keys[KeyCode].Released = true;
+                Keys[KeyCode].Pressed = false;
+                Keys[KeyCode].TimeSincePressed = 0;
+            }
         }
-        else if (Action == GLFW_RELEASE)
+
+        void CursorPositionCallBack(GLFWwindow* WindowInstance, double XPosition, double YPosition)
         {
-            WindowObject->Keys[KeyCode].Released = true;
-            WindowObject->Keys[KeyCode].Pressed = false;
-            WindowObject->Keys[KeyCode].TimeSincePressed = 0;
+            MousePosition.x = XPosition;
+            MousePosition.y = YPosition;
         }
-    }
 
-    void Window::CursorPositionCallBack(GLFWwindow* WindowInstance, double XPosition, double YPosition)
-    {
-        Window* WindowObject = static_cast<Window*>(glfwGetWindowUserPointer(WindowInstance));
-
-        assert(WindowObject);
-
-        WindowObject->MousePosition.x = XPosition;
-        WindowObject->MousePosition.y = YPosition;
-    }
-
-    void Window::MouseButtonCallBack(GLFWwindow* WindowInstance, int Button, int Action, int Mods)
-    {
-        Window* WindowObject = static_cast<Window*>(glfwGetWindowUserPointer(WindowInstance));
-
-        MouseButtonCodes MouseButtonCode = ConvertGLFWMouseButton(Button);
-
-        assert(WindowObject);
-
-        if (Action == GLFW_PRESS)
+        void MouseButtonCallBack(GLFWwindow* WindowInstance, int Button, int Action, int Mods)
         {
-            WindowObject->MouseButtons[MouseButtonCode].Pressed = true;
-            WindowObject->MouseButtons[MouseButtonCode].TimeSincePressed = glfwGetTime();
+            MouseButtonCodes MouseButtonCode = ConvertGLFWMouseButton(Button);
+
+            if (Action == GLFW_PRESS)
+            {
+                MouseButtons[MouseButtonCode].Pressed = true;
+                MouseButtons[MouseButtonCode].TimeSincePressed = glfwGetTime();
+            }
+            else if (Action == GLFW_RELEASE)
+            {
+                MouseButtons[MouseButtonCode].Released = true;
+                MouseButtons[MouseButtonCode].Pressed = false;
+                MouseButtons[MouseButtonCode].TimeSincePressed = 0;
+            }
         }
-        else if (Action == GLFW_RELEASE)
+
+        void ScrollCallBack(GLFWwindow* WindowInstance, double XOffset, double YOffset)
         {
-            WindowObject->MouseButtons[MouseButtonCode].Released = true;
-            WindowObject->MouseButtons[MouseButtonCode].Pressed = false;
-            WindowObject->MouseButtons[MouseButtonCode].TimeSincePressed = 0;
+            ScrollOffset += XOffset;
         }
-    }
-
-    void Window::ScrollCallBack(GLFWwindow* WindowInstance, double XOffset, double YOffset)
-    {
-        Window* WindowObject = static_cast<Window*>(glfwGetWindowUserPointer(WindowInstance));
-
-        assert(WindowObject);
-
-        WindowObject->ScrollOffset += XOffset;
     }
 }

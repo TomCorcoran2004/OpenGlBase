@@ -15,22 +15,22 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp">
+    <ClCompile Include="Include\OpenGlBase\Render\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OpenGlBase\Window\Window.cpp">
+    <ClCompile Include="Include\OpenGlBase\Window\Window.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OpenGlBase\Debug\Log.cpp">
+    <ClCompile Include="Include\OpenGlBase\Debug\Log.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Include\glad\glad.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OpenGlBase\Shader\ShaderManager.cpp">
+    <ClCompile Include="Include\OpenGlBase\Shader\ShaderManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OpenGlBase\Base.cpp">
+    <ClCompile Include="Include\OpenGlBase\Base.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Include\glm\detail\glm.cpp">
@@ -39,18 +39,24 @@
     <ClCompile Include="Include\glm\glm.cppm">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Include\OpenGlBase\Input\Input.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Include\OpenGlBase\Render\Render2D.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="OpenGlBase\Window\Window.h">
+    <ClInclude Include="Include\OpenGlBase\Window\Window.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="OpenGlBase\Debug\Log.h">
+    <ClInclude Include="Include\OpenGlBase\Debug\Log.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="OpenGlBase\Shader\ShaderManager.h">
+    <ClInclude Include="Include\OpenGlBase\Shader\ShaderManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="OpenGlBase\Base.h">
+    <ClInclude Include="Include\OpenGlBase\Base.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Include\glad\glad.h">
@@ -927,6 +933,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Include\KHR\khrplatform.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\OpenGlBase\Input\Input.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Render2D.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
