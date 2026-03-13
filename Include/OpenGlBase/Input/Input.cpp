@@ -467,7 +467,7 @@ namespace Base
         void CursorPositionCallBack(GLFWwindow* WindowInstance, double XPosition, double YPosition)
         {
             MousePosition.x = XPosition;
-            MousePosition.y = YPosition;
+            MousePosition.y =  Window::GetWindowSize().y - YPosition;
         }
 
         void MouseButtonCallBack(GLFWwindow* WindowInstance, int Button, int Action, int Mods)
