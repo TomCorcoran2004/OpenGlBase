@@ -59,7 +59,6 @@ namespace Base
 
         void Tick()
         {
-            LastMousePosition = MousePosition;
             MouseDelta = MousePosition - LastMousePosition;
             LastMousePosition = MousePosition;
 
